@@ -1,4 +1,4 @@
-// The replay page: one recorded match (replay.bin, built by env/src/buildReplay.ts) played through the viewer's
+// The replay page: a recorded match (replays/<id>.bin, built by env/src/buildReplay.ts) played through the viewer's
 // own drawing code (viewer.js). Where the live viewer gets frames from a stream, this hands them over from the
 // recording — played, paused, jumped about in — and words the panels in English.
 'use strict';
@@ -7,12 +7,15 @@
   const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   const thing = type => Real.catalog()?.names?.[type] ?? type ?? '';
   Object.assign(CONTROLLER, { learner: 'RL · latest', model: 'RL · snapshot', bot: 'scripted' });
-  MODES.splice(0, MODES.length, 'gun', 'melee', 'grenade', 'smoke');
+  MODES.splice(0, MODES.length, 'gun', 'melee', 'grenade', 'smoke', 'boost');
 
-  let rep;
+  // The matches there are (replays/index.json), and the one the address asks for (?m=…), else the first.
+  let rep, list, match;
   try {
-    const res = await fetch('replay.bin');
-    if (!res.ok) throw new Error(`replay.bin: ${res.status}`);
+    list = await (await fetch('replays/index.json')).json();
+    match = list.find(m => m.id === new URLSearchParams(location.search).get('m')) ?? list[0];
+    const res = await fetch(`replays/${match.id}.bin`);
+    if (!res.ok) throw new Error(`match ${match.id}: ${res.status}`);
     rep = await new Response(res.body.pipeThrough(new DecompressionStream('gzip'))).json();
   } catch (error) {
     $('blurb').textContent = `The recording did not load (${error.message}). A recent Chrome, Firefox or Safari is needed.`;
@@ -99,6 +102,7 @@
     document.querySelector('#cover h1').textContent = w ? `${w} won the match` : 'The match is over';
     $('blurb').textContent = w ? `${clock(total)} of play, ${squad?.kills ?? 0} kills. Watch it again from another squad's side: click one in the list.` : `${clock(total)} of play.`;
     $('start').textContent = 'Watch again';
+    if (list.length > 1) { $('nextMatch').href = `?m=${list[(list.indexOf(match) + 1) % list.length].id}`; $('nextMatch').hidden = false; }
     $('cover').hidden = false;
   }
   function frame() {
@@ -134,7 +138,7 @@
     if (e.code === 'Space') { e.preventDefault(); if ($('cover').hidden) setPlaying(!playing); }
     else if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') { e.preventDefault(); seek(shown + (e.code === 'ArrowRight' ? 150 : -150)); }
   });
-  $('start').onclick = () => { $('cover').hidden = true; setPlaying(true); };
+  $('start').onclick = () => { $('cover').hidden = true; $('nextMatch').hidden = true; setPlaying(true); };
 
   // --- the panels, in English (the viewer's are its own) ---
   const mine = e => squadOf.get(e.by)?.squad === follow || squadOf.get(e.v)?.squad === follow;
@@ -160,7 +164,7 @@
       return `<div class="agent${watching ? ' watching' : ''}" data-pid="${m.pid}" title="Click for this player's view"><div class="top"><b>${m.id}${watching ? ' (watching)' : ''}</b><span class="muted">${state}</span></div>
         <div class="muted">${guns}${doing ? ` · ${doing}` : ''}</div>
         <div class="hp"><div style="width:${p.dead ? 0 : p.hp}%"></div></div>
-        ${it && !p.dead ? `<div class="intent">${MOVES[it[0]]}${target ? ` → ${target}` : ''} · ${MODES[it[2]]}</div>` : ''}</div>`;
+        ${it && !p.dead ? `<div class="intent">${MOVES[it[0]]}${target ? ` → ${target}` : ''}${MODES[it[2]] ? ` · ${MODES[it[2]]}` : ''}</div>` : ''}</div>`;
     }).join('');
     $('log').innerHTML = log.slice(-40).reverse().map(e => `<div class="${mine(e) ? 'mine' : ''}"><time>${clock(e.t)}</time>${e.text}</div>`).join('') || '<div class="muted">Nothing yet</div>';
   };
@@ -198,8 +202,9 @@
   follow = lastFollow;
   seek(0);
   setView(true);
-  const squads = rep.map.squads.length, w = rep.end.winner;
-  $('blurb').textContent = `A recorded match of survev, an open-source 2D battle royale: ${squads} squads of four, ${clock(total)} long, played on a local server. ${w ? `Squad ${w} wins it. You start on its side.` : ''}`;
+  const squads = rep.map.squads.length, w = rep.end.winner, which = list.length > 1 ? `Match ${list.indexOf(match) + 1} of ${list.length}. ` : '';
+  $('matches').innerHTML = list.map((m, i) => `<a class="match${m === match ? ' on' : ''}" href="?m=${m.id}"><b>Match ${i + 1}</b><span class="muted">${m.winner} wins · ${CONTROLLER[m.by] ?? ''}</span><span class="muted">${clock(m.seconds)}</span></a>`).join('');
+  $('blurb').textContent = `${which}A recorded match of survev, an open-source 2D battle royale: ${squads} squads of four, ${clock(total)} long, played on a local server. ${w ? `Squad ${w} wins it. You start on its side.` : ''}`;
   $('start').textContent = 'Watch the match'; $('start').disabled = false;
   requestAnimationFrame(frame);
 })();

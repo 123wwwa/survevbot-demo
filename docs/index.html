@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>survevBot — watch an AI squad win a match</title>
-<meta name="description" content="A recorded match of a 2D battle royale in which every player is a bot. The winning squad was trained with multi-agent reinforcement learning.">
+<title>survevBot — watch AI squads play full matches</title>
+<meta name="description" content="Recorded matches of a 2D battle royale in which every player is a bot. The winning squads were trained with multi-agent reinforcement learning.">
 <style>
   :root {
     --bg: #1b1f1a; --panel: #23281f; --line: #3a4233; --text: #e6ead8; --muted: #9aa48a;
@@ -114,6 +114,13 @@
   #cover p { color: #cfd6bf; margin: 0 0 16px; font-size: 14px; }
   #cover button { font-size: 16px; padding: 10px 22px; background: var(--accent); border-color: var(--accent); color: #1b1f1a; font-weight: 700; }
   #cover button:disabled { opacity: .6; cursor: default; }
+  #nextMatch { display: inline-block; margin-left: 8px; padding: 10px 18px; font-size: 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--text); text-decoration: none; }
+  #nextMatch[hidden] { display: none; }
+  #matches { display: grid; gap: 2px; }
+  aside a.match { display: flex; gap: 8px; align-items: baseline; padding: 3px 4px; border-radius: 4px; color: var(--text); text-decoration: none; }
+  a.match:hover, a.match.on { background: rgba(255,255,255,.07); }
+  a.match.on b { color: var(--accent); }
+  a.match .muted:last-child { margin-left: auto; font-variant-numeric: tabular-nums; }
   aside p { margin: 0 0 8px; }
   aside a { color: var(--accent); }
   .squad .kills { color: var(--muted); font-size: 11px; }
@@ -148,7 +155,7 @@
         <div class="card">
           <h1>Every player here is a bot</h1>
           <p id="blurb">A recorded match of survev, an open-source 2D battle royale. Loading…</p>
-          <button id="start" disabled>Loading…</button>
+          <button id="start" disabled>Loading…</button><a id="nextMatch" hidden>Next match</a>
         </div>
       </div>
     </div>
@@ -166,8 +173,10 @@
   </div>
   <aside>
     <h2>What this is</h2>
-    <p>A squad of four agents trained with multi-agent reinforcement learning to play <a href="https://github.com/survev/survev" target="_blank" rel="noopener">survev</a>, an open-source 2D battle royale. This match was played on a local server, and nobody in it is human.</p>
+    <p>Squads of four agents trained with multi-agent reinforcement learning to play <a href="https://github.com/survev/survev" target="_blank" rel="noopener">survev</a>, an open-source 2D battle royale. These matches were played on a local server, and nobody in them is human.</p>
     <p class="muted">The model decides where to go, who to fight and what to use. Scripts carry that out: aiming, pathfinding, healing, throws. <a id="repo" href="https://github.com/123wwwa/survevbot-demo" target="_blank" rel="noopener">More about the project</a></p>
+    <h2>Matches</h2>
+    <div id="matches"></div>
     <h2>Squads <span class="muted">(click to follow)</span></h2>
     <div id="squads"></div>
     <h2>Following</h2>

@@ -2,9 +2,9 @@
 
 Squads of four agents that learned to play a 2D battle royale with multi-agent reinforcement learning. A proof of concept.
 
-**[Watch a full match in your browser](https://123wwwa.github.io/survevbot-demo/)** · [40-second clip](https://www.youtube.com/shorts/PPAVNHRAb7k)
+**[Watch full matches in your browser](https://123wwwa.github.io/survevbot-demo/)** · [40-second clip](https://www.youtube.com/shorts/PPAVNHRAb7k)
 
-The game is [survev](https://github.com/survev/survev), an open-source clone of surviv.io. Everything runs on a local, unmodified game server, and nobody in the replay is human.
+The game is [survev](https://github.com/survev/survev), an open-source clone of surviv.io. Everything runs on a local, unmodified game server, and nobody in the replays is human.
 
 ## How it works
 
@@ -13,9 +13,14 @@ The game is [survev](https://github.com/survev/survev), an open-source clone of 
 - **Actions**: the policy picks an intent (loot, take cover, peek, retreat, regroup, push), a target, and what to use. Scripted skills carry it out: aiming, pathfinding, healing and revives, throws.
 - **Reward**: one team reward shared by the squad.
 
-## The replay
+## Training
 
-Follow any squad or a single player, switch the AI's intent lines on and off, and jump to any point of the match. `RL · latest` is the model in training, `RL · snapshot` is a saved version of it used as an opponent, and `scripted` is a hand-written bot.
+- **Hardware**: one desktop PC. AMD Ryzen 7 7800X3D (8 cores, 16 threads), NVIDIA GeForce RTX 5070 (12 GB), 32 GB RAM, Windows 11.
+- **Time**: about 95 hours of training so far (as of 14 October 2026), about 17,000 policy updates, with 14 game environments running in parallel on the CPU. Training is still going.
+
+## The replays
+
+The page holds several recorded matches, each won by a model squad. Follow any squad or a single player, switch the AI's intent lines on and off, and jump to any point of a match. `RL · latest` is the model in training, `RL · snapshot` is a saved version of it used as an opponent, and `scripted` is a hand-written bot.
 
 ## Not included
 
