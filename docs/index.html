@@ -98,6 +98,7 @@
   #top { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; pointer-events: none; }
   #top > * { pointer-events: auto; }
   #top .title { font-weight: 700; }
+  #top a.chip { color: var(--accent); margin-left: auto; }
   #transport { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel); border-top: 1px solid var(--line); }
   #transport .track { flex: 1; min-width: 60px; display: grid; gap: 2px; }
   #transport input[type=range] { width: 100%; margin: 0; accent-color: var(--accent); }
@@ -141,6 +142,7 @@
         <button id="viewSquad" title="The whole squad from above. Wheel: zoom. Drag: look around">Squad view</button>
         <button id="intent" title="Where each agent of the followed squad means to go (dashed line) and who it is targeting (red line)">AI intent</button>
         <button id="audio" title="The game's sounds">Sound</button>
+        <a class="chip" href="https://github.com/123wwwa/survevbot-demo" target="_blank" rel="noopener" title="What this is and how it works">GitHub</a>
       </div>
       <div id="cover">
         <div class="card">
