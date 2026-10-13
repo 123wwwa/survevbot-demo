@@ -12,7 +12,7 @@
   // The matches there are (replays/index.json), and the one the address asks for (?m=…), else the first.
   let rep, list, match;
   try {
-    list = await (await fetch('replays/index.json')).json();
+    list = await (await fetch('replays/index.json', { cache: 'no-cache' })).json();   // the list grows: ask the host each time
     match = list.find(m => m.id === new URLSearchParams(location.search).get('m')) ?? list[0];
     const res = await fetch(`replays/${match.id}.bin`);
     if (!res.ok) throw new Error(`match ${match.id}: ${res.status}`);
