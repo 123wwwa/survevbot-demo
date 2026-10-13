@@ -6,12 +6,12 @@ Squads of four agents that learned to play a 2D battle royale with multi-agent r
 
 The game is [survev](https://github.com/survev/survev), an open-source clone of surviv.io. Everything runs on a local, unmodified game server, and nobody in the replays is human.
 
-## How it works
+## Model
 
-- **MAPPO** with a centralized critic and one actor shared by the squad. The actor sees only what a real game client receives.
-- **Input**: about 1.4k features, local grids and a minimap through small CNNs, a set encoder over visible enemies, then a GRU.
-- **Actions**: the policy picks an intent (loot, take cover, peek, retreat, regroup, push), a target, and what to use. Scripted skills carry it out: aiming, pathfinding, healing and revives, throws.
-- **Reward**: one team reward shared by the squad.
+- **MAPPO**: a centralized critic and one actor network shared by the four members of a squad. The actor sees only what a real game client receives.
+- **Input**: about 1.4k features, two local grids and a minimap through small CNNs, and a set encoder over the visible enemies.
+- **Memory**: a GRU after the encoders.
+- **Output**: an intent (loot, take cover, peek, retreat, regroup, push), a target, and what to use.
 
 ## Training
 
