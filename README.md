@@ -20,7 +20,7 @@ The game is [survev](https://github.com/survev/survev), an open-source clone of 
 
 ## The replays
 
-The page holds several recorded matches, each won by a model squad. Follow any squad or a single player, switch the AI's intent lines on and off, and jump to any point of a match. `RL · latest` is the model in training, `RL · snapshot` is a saved version of it used as an opponent, and `scripted` is a hand-written bot.
+The page holds several recorded matches, each won by a model squad. Follow any squad or a single player, switch the AI's intent lines on and off, and jump to any point of a match. `RL · latest` is the model in training and `RL · snapshot` is a saved version of it used as an opponent.
 
 ## Not included
 
