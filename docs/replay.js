@@ -6,7 +6,7 @@
   const $ = id => document.getElementById(id);
   const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   const thing = type => Real.catalog()?.names?.[type] ?? type ?? '';
-  Object.assign(CONTROLLER, { learner: 'RL · latest', model: 'RL · snapshot', bot: 'scripted' });
+  Object.assign(CONTROLLER, { learner: 'RL · latest', model: 'RL · snapshot', bot: 'baseline' });
   MODES.splice(0, MODES.length, 'gun', 'melee', 'grenade', 'smoke', 'boost');
 
   // The matches there are (replays/index.json), and the one the address asks for (?m=…), else the first.
