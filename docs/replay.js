@@ -140,6 +140,18 @@
   });
   $('start').onclick = () => { $('cover').hidden = true; $('nextMatch').hidden = true; setPlaying(true); };
 
+  // --- from one match to another: the page opens again on it (?m=…), and plays at once ---
+  const AT_ONCE = 'survevbot.play';
+  const remember = () => { try { sessionStorage.setItem(AT_ONCE, '1'); } catch { /* no storage: the cover shows first */ } };
+  const openMatch = m => { remember(); location.search = `?m=${m.id}`; };
+  const beside = step => list[(list.indexOf(match) + step + list.length) % list.length];
+  $('matchPick').innerHTML = list.map((m, i) => `<option value="${m.id}"${m === match ? ' selected' : ''}>Match ${i + 1} of ${list.length} · ${m.winner} wins</option>`).join('');
+  $('matchPick').onchange = e => openMatch(list.find(m => m.id === e.target.value));
+  $('matchPrev').onclick = () => openMatch(beside(-1));
+  $('matchNext').onclick = () => openMatch(beside(1));
+  $('switch').hidden = list.length < 2;
+  addEventListener('click', e => { if (e.target.closest('a[href^="?m="]')) remember(); }, true);   // the list's and the end card's links
+
   // --- the panels, in English (the viewer's are its own) ---
   const mine = e => squadOf.get(e.by)?.squad === follow || squadOf.get(e.v)?.squad === follow;
   window.renderPanel = () => {
@@ -206,5 +218,8 @@
   $('matches').innerHTML = list.map((m, i) => `<a class="match${m === match ? ' on' : ''}" href="?m=${m.id}"><b>Match ${i + 1}</b><span class="muted">${m.winner} wins · ${CONTROLLER[m.by] ?? ''}</span><span class="muted">${clock(m.seconds)}</span></a>`).join('');
   $('blurb').textContent = `${which}A recorded match of survev, an open-source 2D battle royale: ${squads} squads of four, ${clock(total)} long, played on a local server. ${w ? `Squad ${w} wins it. You start on its side.` : ''}`;
   $('start').textContent = 'Watch the match'; $('start').disabled = false;
+  let atOnce = false;
+  try { atOnce = sessionStorage.getItem(AT_ONCE) === '1'; sessionStorage.removeItem(AT_ONCE); } catch { /* as above */ }
+  if (atOnce) $('start').click();
   requestAnimationFrame(frame);
 })();

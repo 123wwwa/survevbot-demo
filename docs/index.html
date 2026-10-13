@@ -99,6 +99,9 @@
   #top > * { pointer-events: auto; }
   #top .title { font-weight: 700; }
   #top a.chip { color: var(--accent); margin-left: auto; }
+  #switch { display: inline-flex; gap: 2px; }
+  #switch[hidden] { display: none; }
+  #switch button { padding: 4px 9px; font-weight: 700; }
   #transport { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel); border-top: 1px solid var(--line); }
   #transport .track { flex: 1; min-width: 60px; display: grid; gap: 2px; }
   #transport input[type=range] { width: 100%; margin: 0; accent-color: var(--accent); }
@@ -145,6 +148,11 @@
       </div>
       <div id="top">
         <span class="chip title">survevBot replay</span>
+        <span id="switch" hidden>
+          <button id="matchPrev" title="Previous match" aria-label="Previous match">‹</button>
+          <select id="matchPick" title="Choose a match" aria-label="Match"></select>
+          <button id="matchNext" title="Next match" aria-label="Next match">›</button>
+        </span>
         <button id="viewPlayer" title="One player, as the game shows it to that player">Player view</button>
         <button id="viewSquad" title="The whole squad from above. Wheel: zoom. Drag: look around">Squad view</button>
         <button id="intent" title="Where each agent of the followed squad means to go (dashed line) and who it is targeting (red line)">AI intent</button>
