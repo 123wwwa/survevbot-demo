@@ -64,6 +64,10 @@ A running evaluation of the model in training against expert bots (about 5,000 g
 
 **Caveats.** Head-to-head comparisons are 6–8 games each. Observation, reward and training changes overlap, so there is no clean ablation. The p-values are descriptive: nothing was pre-registered and there is no correction for multiple comparisons. The expert bot shares the low-level control, so these numbers compare decision making.
 
+## Outside the simulator
+
+In one uncontrolled test in November 2026, a squad of four model-controlled clients played 112 squad games on a public server and won 40 (36%, 95% CI 27–45%). With equal teams, chance would be about 10%. The result depends heavily on network delay, and the other players were human and did not know they were playing bots, so it is reported only as a single aggregate. The bot is not released.
+
 ## Training
 
 - **Hardware**: one desktop PC. AMD Ryzen 7 7800X3D (8 cores, 16 threads), NVIDIA GeForce RTX 5070 (12 GB), 32 GB RAM, Windows 11.
