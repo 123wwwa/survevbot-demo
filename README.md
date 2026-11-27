@@ -4,6 +4,10 @@ Squads of four AI agents that learned to play a 2D battle royale with multi-agen
 
 **[Watch full matches in your browser](https://123wwwa.github.io/survevbot-demo/)** · [short clip](https://www.youtube.com/shorts/PPAVNHRAb7k) (October 2026 model)
 
+![The policy network deciding live during training: inputs, encoders, GRU, the three heads and the choice](media/network-live.gif)
+
+*The network of one agent deciding live, in training: its inputs, the encoders, the GRU memory, and the three output heads with the choices that are open (bright) and the one taken.*
+
 The game is [survev](https://github.com/survev/survev), an open-source clone of surviv.io. Everything here ran on the unmodified open-source game server on a local machine, and nobody in the replays is human.
 
 ## At a glance
@@ -15,7 +19,7 @@ The game is [survev](https://github.com/survev/survev), an open-source clone of 
 | Policy | recurrent actor (CNNs + set encoders + GRU), about 3.4M parameters, one decision every 0.25 s |
 | Training | about 1,100 hours of run time and about 125k policy updates, 9 October – 28 November 2026, still running |
 | Hardware | one desktop PC: Ryzen 7 7800X3D, RTX 5070 12 GB, 32 GB RAM |
-| Result | October checkpoints won 83 of 112 local games against a hand-written expert bot (74%, chance about 53%) |
+| Result | against a hand-written expert bot in the same games: 2.3× its kills per squad, 71% of one-on-one fights won (896 games, 24–27 November 2026) |
 
 ## The problem
 
@@ -28,6 +32,10 @@ The game is [survev](https://github.com/survev/survev), an open-source clone of 
 ## Approach
 
 **Hierarchical policy.** Every 0.25 s the policy chooses *where to go* (an intent, mostly picked among candidate destinations), *who to engage* (one of the enemies it knows about, or nobody) and *what to use*. The low-level control under it is not learned and is not described here. The learning problem is the decision making.
+
+**What goes in.** The clip below is real footage from training: one agent's own game view, and the network's inputs captured at the same moments ([MP4](media/inputs-in-game.mp4)).
+
+![How one agent's game view becomes the network's inputs](media/inputs-in-game.gif)
 
 **MAPPO with centralized training, decentralized execution.**
 
@@ -50,23 +58,33 @@ The game is [survev](https://github.com/survev/survev), an open-source clone of 
 
 ## Results (local simulation)
 
-All games ran on a local server. Both sides played their most likely actions under simulated delay. These evaluations used checkpoints from October 2026 (updates 56k–80k, an actor of about 3.0M parameters), smaller than the current model.
+**Against the rule-based expert bot (current model).** A greedy evaluation runs beside training: model squads and expert-bot squads play in the same games, on the training map, with simulated delay. Over 896 games from 24 to 27 November 2026:
 
-| Comparison | Result | Notes |
+| Measure | Model squads | Notes |
 |---|---|---|
-| Learned policy vs expert bot (same low-level control) | **83 of 112 games won (74%, 95% CI 65–82%)** | chance from squad share about 53%; 1.59× the bots' kills per squad; 14 evaluations of 8 games |
-| Learned intents vs random intents (same low-level control) | 8 of 8 games won | kills per squad 6.33 vs 0.89: the learned decisions drive performance; small sample |
-| Trained with delay vs without | each model won 5 of 6 games under its own training condition | 10 of 12 together (one-sided sign test p = 0.019); mixed on kills and damage |
+| Kills per squad | **2.3×** the bots' (2.22–2.33 by day) | |
+| Damage dealt ÷ damage taken | **1.7×** the bots' (1.67–1.72) | |
+| One-on-one fights (a knock or kill between a model player and a bot) | **71%** won (70.8–72.3) | about 2,500 fights a day |
+| Games won per squad | 11.5% (11.3–11.8) | a fair share would be 7.4% |
 
-A running evaluation of the model in training against expert bots (about 5,000 games in November 2026, while maps and delay settings changed) gives 2.07× the bots' kills per squad and 69% of one-on-one duels won.
+The expert bot uses the same low-level control as the model, so the gap is in the decisions.
 
-**Teamwork.** Nothing in the reward asks for close spacing; the only distance terms penalize being far from every teammate. In fights, the policy kept its nearest teammate 2–8 m away in 31% of decisions, against 24% for the expert bots, and this share was higher in 11 of 12 evaluations (one tie).
+**Progress over training.** In training games the model also meets a frozen model from 18 October 2026 and the expert bots. Knocks the model dealt for each knock it took, by version:
 
-**Caveats.** Head-to-head comparisons are 6–8 games each. Observation, reward and training changes overlap, so there is no clean ablation. The p-values are descriptive: nothing was pre-registered and there is no correction for multiple comparisons. The expert bot shares the low-level control, so these numbers compare decision making.
+| Version (dates) | vs the 18 October model | vs the expert bots | Games |
+|---|---|---|---|
+| v30 (21–22 Oct) | 1.13 | 0.95 | 3,170 |
+| v36 (30 Oct) | 1.92 | 1.38 | 957 |
+| v44 (11–13 Nov) | 2.58 | 1.67 | 3,231 |
+| v46 (22–28 Nov, current) | 2.21 | 1.87 | 13,594 |
+
+Training games sample actions instead of taking the most likely one. From 16 November training moved to a single new map, which explains the dip against the frozen model between v44 and v46; against the bots the trend kept rising.
+
+**Caveats.** These are logs of the running training, not a pre-registered experiment. Observation, reward and skill changes overlap between versions, so there is no clean ablation.
 
 ## Outside the simulator
 
-In one uncontrolled test in November 2026, a squad of four model-controlled clients played 112 squad games on a public server and won 40 (36%, 95% CI 27–45%). With equal teams, chance would be about 10%. The result depends heavily on network delay, and the other players were human and did not know they were playing bots, so it is reported only as a single aggregate. The bot is not released.
+In one uncontrolled test on 1 November 2026 (an earlier model, about update 84,800), a squad of four model-controlled clients played 112 squad games on a public server and won 40 (36%, 95% CI 27–45%). With equal teams, chance would be about 10%. The result depends heavily on network delay, and the other players were human and did not know they were playing bots, so it is reported only as a single aggregate. The bot is not released.
 
 ## Training
 
