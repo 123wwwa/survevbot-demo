@@ -173,63 +173,74 @@ const Real = (() => {
         minigun: [[18, 7.25], [54, 0]], launcher: [[20, 10], [2, 22]], pistol: [[14, 1.75], [14, 1.75]], dualPistol: [[15.75, -8.75], [15.75, 8.75]],
         slash: [[18, -8.25], [6, 20.25]], meleeTwoHanded: [[10.5, -14.25], [18, 6.25]], meleeKatana: [[8.5, 13.25], [-3, 17.75]],
         meleeNaginata: [[19, -7.25], [8.5, 24.25]], machete: [[14, -12.25], [1, 17.75]], cutlass: [[14, -12.25], [6, 16]],
+        throwable: [[15.75, -9.625], [15.75, 9.625]],
     };
     const BAG_OFFSETS = [10.25, 11.5, 12.75];
-    function swingPose(attacks, [time, seq]) {
-        const name = attacks[seq % attacks.length], frames = cat.anims?.[name];
+    function animPose(name, time, mirror) {
+        const frames = cat.anims?.[name];
         if (!frames?.length || time > frames[frames.length - 1].t)
             return null;
-        const mirror = name === 'fists' && attacks.length === 1 && seq % 2 === 1;
         let b = 0;
         while (b < frames.length - 1 && time >= frames[b].t)
             b++;
         const a = Math.max(0, b - 1), t = frames[b].t > frames[a].t ? Math.min(1, (time - frames[a].t) / (frames[b].t - frames[a].t)) : 1;
-        return [0, 1].map(i => {
-            const bone = mirror ? 1 - i : i, A = frames[a].b[bone], B = frames[b].b[bone];
+        return [0, 1, 2, 3].map(i => {
+            const bone = mirror ? i ^ 1 : i, A = frames[a].b[bone], B = frames[b].b[bone];
             if (!A || !B)
                 return undefined;
             const p = A.map((x, j) => x + (B[j] - x) * t);
             return mirror ? [p[0], -p[1], -p[2], p[3], -p[4]] : p;
         });
     }
+    function swingPose(attacks, [time, seq]) {
+        const name = attacks[seq % attacks.length];
+        return animPose(name, time, name === 'fists' && attacks.length === 1 && seq % 2 === 1);
+    }
+    const ANIMS = { 2: 'cook', 3: 'throw', 4: 'crawl_forward', 5: 'crawl_backward', 6: 'revive' };
+    const shade = (c, f) => (Math.round(((c >> 16) & 255) * f) << 16) | (Math.round(((c >> 8) & 255) * f) << 8) | Math.round((c & 255) * f);
     function drawPlayer(ctx, p, x, y, k) {
-        const o = cat.outfit, gun = cat.guns[p.weapon], melee = gun ? null : cat.melee?.[p.weapon], dir = -Math.atan2(p.dy, p.dx);
+        const o = cat.outfit, gun = cat.guns[p.weapon], melee = gun ? null : cat.melee?.[p.weapon], thrown = gun || melee ? null : cat.throwables?.[p.weapon], dir = -Math.atan2(p.dy, p.dx);
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(dir);
         const part = (name, tint, px, py, scale, rot = 0, ax = 0.5, ay = 0.5, sy) => put(ctx, sprite(name, tint), px * k, py * k, rot, scale * k, (sy ?? scale) * k, 1, ax, ay);
+        const bodyTint = p.tint ?? o.bodyTint, handTint = p.tint != null ? shade(p.tint, 0.82) : o.handTint, footTint = p.tint != null ? shade(p.tint, 0.82) : o.footTint;
+        const an = p.anim && ANIMS[p.anim[0]] ? p.anim : null, armed = !p.downed && an?.[0] !== 6;
+        const bones = an ? animPose(ANIMS[an[0]], an[1], (an[0] === 4 || an[0] === 5) && an[2] % 2 === 1) : null;
         const bag = cat.gear[p.backpack]?.level ?? 0;
         if (bag > 0 && !p.downed)
             part(o.pack, o.packTint, -BAG_OFFSETS[Math.min(bag - 1, 2)], 0, (0.4 + bag * 0.03) * 0.5);
         if (p.downed) {
+            const at = (bone, idle) => bone ? [bone[0] + bone[3] * Math.cos(bone[2]) - bone[4] * Math.sin(bone[2]), bone[1] + bone[3] * Math.sin(bone[2]) + bone[4] * Math.cos(bone[2])] : idle;
             for (const side of [-1, 1]) {
+                const foot = at(bones?.[side < 0 ? 2 : 3], [-15.75, 9 * side]), hand = at(bones?.[side < 0 ? 0 : 1], [14, 12.25 * side]);
                 if (o.foot)
-                    part(o.foot, o.footTint, -15.75, 9 * side, 0.45, Math.PI / 2);
-                part(o.hand, o.handTint, 14, 12.25 * side, 0.175);
+                    part(o.foot, footTint, foot[0], foot[1], 0.45, Math.PI / 2);
+                part(o.hand, handTint, hand[0], hand[1], 0.175);
             }
         }
-        part(o.body, o.bodyTint, 0, 0, 0.25);
+        part(o.body, bodyTint, 0, 0, 0.25);
         const chest = cat.gear[p.chest];
         if (chest?.s)
             part(chest.s, chest.t, 0, 0, 0.25);
         if (p.pan && cat.pan)
             part(cat.pan.s, cat.pan.t, cat.pan.p[0], cat.pan.p[1], cat.pan.sc, cat.pan.r);
-        const pose = POSES[p.downed ? 'fists' : gun ? gun.pose : melee ? melee.pose : 'fists'] ?? POSES.fists;
+        const pose = POSES[p.downed ? 'fists' : gun ? gun.pose : melee ? melee.pose : thrown ? 'throwable' : 'fists'] ?? POSES.fists;
         let [lx, ly] = pose[0];
         let [rx, ry] = pose[1];
-        const sw = !gun && !p.downed && p.swing ? swingPose(melee?.atk ?? ['fists'], p.swing) : null;
-        const boneL = sw?.[0], boneR = sw?.[1];
+        const sw = !gun && !p.downed && p.swing ? swingPose(melee?.atk ?? ['fists'], p.swing) : null, moved = sw ?? (p.downed ? null : bones);
+        const boneL = moved?.[0], boneR = moved?.[1];
         if (boneL)
             [lx, ly] = boneL;
         if (boneR)
             [rx, ry] = boneR;
-        if (gun && !p.downed && gun.lh) {
+        if (gun && armed && gun.lh) {
             lx += gun.lh[0];
             ly += gun.lh[1];
         }
-        if (gun && !p.downed && p.recoil)
+        if (gun && armed && p.recoil)
             rx -= p.recoil * 1.125;
-        if (gun && !p.downed) {
+        if (gun && armed) {
             const off = gun.pose === 'dualRifle' || gun.pose === 'dualPistol' ? [-5.95, 0] : [-4.25 + (gun.go?.[0] ?? 0), -1.75 + (gun.go?.[1] ?? 0)];
             const drawGun = (hx, hy) => {
                 ctx.save();
@@ -246,8 +257,8 @@ const Real = (() => {
                 drawGun(lx, ly);
             if (!gun.below)
                 drawGun(rx, ry);
-            part(o.hand, o.handTint, lx, ly, 0.175);
-            part(o.hand, o.handTint, rx, ry, 0.175);
+            part(o.hand, handTint, lx, ly, 0.175);
+            part(o.hand, handTint, rx, ry, 0.175);
             if (gun.below)
                 drawGun(rx, ry);
         }
@@ -256,8 +267,12 @@ const Real = (() => {
                 ctx.rotate(bone[2]);
                 ctx.translate(bone[3] * k, bone[4] * k);
             } draw(); ctx.restore(); };
-            hand(lx, ly, boneL, () => part(o.hand, o.handTint, 0, 0, 0.175));
-            const spr = melee && !p.downed ? sprite(melee.s, melee.t) : null;
+            const state = !an ? 'equip' : an[0] === 3 ? 'throwing' : an[0] === 2 && an[1] >= 0.1 ? 'cook' : 'equip';
+            const held = thrown && armed ? thrown.hand?.[state] : null;
+            const object = img => { if (img)
+                part(img[0], 0xffffff, img[1], img[2], img[3], Math.PI / 2); };
+            hand(lx, ly, boneL, () => { part(o.hand, handTint, 0, 0, 0.175); object(held?.[0]); });
+            const spr = melee && armed ? sprite(melee.s, melee.t) : null;
             hand(rx, ry, boneR, () => {
                 if (spr) {
                     ctx.save();
@@ -266,7 +281,8 @@ const Real = (() => {
                     ctx.drawImage(spr.src, melee.p[0] - spr.w / 2, melee.p[1] - spr.h / 2, spr.w, spr.h);
                     ctx.restore();
                 }
-                part(o.hand, o.handTint, 0, 0, 0.175);
+                part(o.hand, handTint, 0, 0, 0.175);
+                object(held?.[1]);
             });
         }
         const helmet = cat.gear[p.helmet];
@@ -365,7 +381,7 @@ const Real = (() => {
             const dead = o.state === 0, name = dead ? def.res : o.state === 4 && def.on ? def.on : o.state === 5 && def.off ? def.off : def.s;
             if (!name)
                 continue;
-            items.push([dead ? 5 : def.z, o.id, () => {
+            items.push([dead ? 5 : o.pl !== undefined ? Math.max(def.z, 21) : def.z, o.id, () => {
                     const [sx, sy] = S(o.x, o.y), s = o.s * def.sc * k;
                     put(ctx, sprite(name, def.t), sx, sy, -o.r, s * (def.mx ? -1 : 1), s * (def.my ? -1 : 1), dead ? 0.75 : def.a, def.ax ?? 0.5, def.ay ?? 0.5);
                 }]);

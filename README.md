@@ -106,7 +106,7 @@ In one uncontrolled test on 1 November 2026 (an earlier model, about update 84,8
 
 [The replay page](https://123wwwa.github.io/survevbot-demo/) holds 10 full matches, each won by a model squad. Follow any squad or a single player, turn each squad's AI intent lines (where it means to go and who it is targeting) on and off, and jump to any point of a match. `RL · latest` is the model in training, `RL · snapshot` is a saved version of it used as an opponent, and `baseline` is the scripted bot.
 
-The matches were recorded on 14 October 2026 on the desert map, at about update 17,500 (around 95 hours of training): an earlier, smaller version of the model than the one described above.
+The matches were recorded on 28 November 2026 on the map used in training since mid-November, with the model described above (about update 125,000). They are the greedy evaluation games the results come from: wins were kept and losses dropped, so the page shows the model at its best, not a typical match.
 
 ## Not included
 
